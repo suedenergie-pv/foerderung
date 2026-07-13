@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Förderrechner Heizung (KfW 458) – SüdEnergie</title>
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#e8603a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Förderrechner">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --orange:#e8603a;--orange-d:#c94e2a;--orange-l:#fff4ee;--orange-m:#fde0d0;
+  --bg:#f4f6f8;--card:#ffffff;--text:#111827;--text2:#374151;
+  --muted:#6b7280;--muted2:#9ca3af;--border:#e5e7eb;--border2:#f3f4f6;
+  --green:#10b981;--green-l:#d1fae5;--green-d:#059669;
+  --red:#ef4444;--red-l:#fee2e2;
+  --blue:#3b82f6;--blue-l:#dbeafe;
+  --r:12px;
+  --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
+}
+
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;background:var(--bg);color:var(--text);line-height:1.5;-webkit-tap-highlight-color:transparent}
+
+.wrap{max-width:560px;margin:0 auto;padding:0 1rem 3rem;padding-bottom:calc(3rem + env(safe-area-inset-bottom))}
+
+/* ── HEADER ─────────────────────────────────── */
+.hero{background:var(--card);border-bottom:1px solid var(--border);padding:1.1rem 1rem calc(1.1rem);position:sticky;top:0;z-index:20}
+.hero-inner{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:.85rem}
+.hero-logo{height:34px;width:auto;flex-shrink:0}
+.hero-txt{min-width:0}
+.hero-title{font-size:1.02rem;font-weight:700;color:var(--text);line-height:1.2}
+.hero-sub{font-size:.74rem;color:var(--muted);margin-top:.1rem}
+
+/* ── CARD / SECTION ─────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:1.15rem 1.1rem;margin-top:1rem}
+
+.field{margin-bottom:1.2rem}
+.field:last-child{margin-bottom:0}
+.field-lbl{display:block;font-size:.82rem;font-weight:600;color:var(--text2);margin-bottom:.5rem}
+.field-lbl .step-num{display:inline-flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;border-radius:99px;background:var(--orange-l);color:var(--orange-d);font-size:.66rem;font-weight:700;margin-right:.4rem;vertical-align:.05rem}
+.field-hint{font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.4}
+
+/* Text/number input */
+.inp{width:100%;font-size:1.05rem;font-weight:600;padding:.7rem .85rem;border:1.5px solid var(--border);border-radius:10px;background:#fff;color:var(--text);appearance:none}
+.inp:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-l)}
+.inp-eur{position:relative}
+.inp-eur .inp{padding-right:2rem}
+.inp-eur::after{content:"€";position:absolute;right:.9rem;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;pointer-events:none}
+input[type=date].inp{font-weight:600}
+/* Hide number spinners */
+.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.inp[type=number]{-moz-appearance:textfield}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:.6rem}
+.stepper button{width:44px;height:44px;flex-shrink:0;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-size:1.4rem;font-weight:600;color:var(--orange-d);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;user-select:none}
+.stepper button:active{background:var(--orange-l)}
+.stepper button:disabled{color:var(--muted2);opacity:.5;cursor:not-allowed}
+.stepper .stepper-val{flex:1;text-align:center;font-size:1.15rem;font-weight:700}
+.stepper .stepper-val small{display:block;font-size:.66rem;font-weight:500;color:var(--muted)}
+
+/* Toggle (segmented) */
+.seg{display:flex;gap:.4rem}
+.seg button{flex:1;padding:.7rem .4rem;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer}
+.seg button.on{border-color:var(--orange);background:var(--orange);color:#fff}
+
+/* Choice buttons */
+.choices{display:grid;gap:.45rem}
+.choices.c3{grid-template-columns:1fr}
+.choices.c4{grid-template-columns:1fr 1fr}
+.choice{padding:.7rem .8rem;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;text-align:left;line-height:1.25}
+.choice.on{border-color:var(--orange);background:var(--orange-l);color:var(--orange-d)}
+.choice.on::before{content:"✓ ";font-weight:800}
+.choice small{display:block;font-weight:400;font-size:.72rem;color:var(--muted);margin-top:.25rem;line-height:1.35}
+.choice.on small{color:var(--orange-d);opacity:.85}
+
+/* Checkbox */
+.check{display:flex;align-items:center;gap:.6rem;cursor:pointer;padding:.4rem 0}
+.check input{width:22px;height:22px;accent-color:var(--orange);flex-shrink:0}
+.check span{font-size:.9rem;font-weight:600;color:var(--text2)}
+
+/* Disabled/masked bonus block */
+.masked{position:relative}
+.masked .field[data-bonus]{opacity:.42;pointer-events:none;filter:grayscale(.4)}
+.mask-note{display:none;font-size:.78rem;font-weight:600;color:var(--muted);background:var(--border2);border:1px dashed var(--border);border-radius:8px;padding:.55rem .7rem;margin-bottom:1.2rem}
+.masked .mask-note{display:block}
+
+/* ── RESULT ─────────────────────────────────── */
+.result{margin-top:1rem}
+.result-placeholder{background:var(--card);border:1.5px dashed var(--border);border-radius:var(--r);padding:2rem 1.1rem;text-align:center;color:var(--muted);font-size:.9rem}
+.result-placeholder .rp-ico{font-size:1.7rem;display:block;margin-bottom:.5rem;opacity:.5}
+
+.res-main{background:linear-gradient(135deg,var(--orange) 0%,var(--orange-d) 100%);border-radius:var(--r);box-shadow:var(--shadow);padding:1.4rem 1.2rem;color:#fff;text-align:center}
+.res-main .res-lbl{font-size:.82rem;font-weight:600;opacity:.92;letter-spacing:.02em}
+.res-main .res-val{font-size:2.5rem;font-weight:800;line-height:1.05;margin:.2rem 0 .1rem}
+.res-sub{display:flex;justify-content:center;gap:1.4rem;margin-top:.7rem;padding-top:.7rem;border-top:1px solid rgba(255,255,255,.25)}
+.res-sub .rs-item{text-align:center}
+.res-sub .rs-k{font-size:.68rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.03em}
+.res-sub .rs-v{font-size:1.15rem;font-weight:700;margin-top:.1rem}
+
+/* Gate: voraussichtlich keine Förderung */
+.res-gate{background:var(--card);border:1.5px solid var(--orange-m);border-left:4px solid var(--orange);border-radius:var(--r);box-shadow:var(--shadow);padding:1.2rem 1.15rem}
+.res-gate .rg-head{display:flex;align-items:center;gap:.55rem;font-size:1rem;font-weight:800;color:var(--orange-d);margin-bottom:.5rem}
+.res-gate .rg-body{font-size:.86rem;color:var(--text2);line-height:1.5}
+
+/* Konditionen line */
+.kond{font-size:.74rem;color:var(--muted);text-align:center;margin-top:.7rem;line-height:1.45}
+
+/* Breakdown */
+.break{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-top:.8rem;overflow:hidden}
+.break > summary{list-style:none;cursor:pointer;padding:.85rem 1.1rem;font-size:.86rem;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+.break > summary::-webkit-details-marker{display:none}
+.break > summary .chev{transition:transform .2s;color:var(--muted)}
+.break[open] > summary .chev{transform:rotate(180deg)}
+.break-body{padding:0 1.1rem 1rem;border-top:1px solid var(--border2)}
+.brow{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;padding:.5rem 0;border-bottom:1px solid var(--border2);font-size:.85rem}
+.brow:last-child{border-bottom:none}
+.brow .bk{color:var(--text2)}
+.brow .bk small{display:block;color:var(--muted);font-size:.72rem;font-weight:400;margin-top:.1rem}
+.brow .bv{font-weight:700;white-space:nowrap;flex-shrink:0}
+.brow.total{border-top:2px solid var(--border);margin-top:.2rem;padding-top:.6rem;font-size:.92rem}
+.brow.total .bv{color:var(--orange-d)}
+.note-warn{font-size:.78rem;color:var(--orange-d);background:var(--orange-l);border:1px solid var(--orange-m);border-radius:8px;padding:.55rem .7rem;margin-top:.7rem;line-height:1.4}
+.note-info{font-size:.78rem;color:var(--text2);background:var(--border2);border-radius:8px;padding:.55rem .7rem;margin-top:.6rem;line-height:1.4}
+
+/* Static disclaimer + footer */
+.static-hint{font-size:.75rem;color:var(--muted);margin-top:.8rem;line-height:1.45;padding:0 .2rem}
+.app-footer{margin-top:1.5rem;padding:1rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted);line-height:1.5}
+.app-footer strong{color:var(--text2)}
+
+/* Utility */
+.mt0{margin-top:0}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <img class="hero-logo" src="./suedenergie-logo.png" alt="SüdEnergie">
+    <div class="hero-txt">
+      <div class="hero-title">Förderrechner Heizung (KfW 458)</div>
+      <div class="hero-sub">Stand: BEG-Reform 21.07.2026</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ── EINGABEN ── -->
+  <section class="card">
+
+    <!-- 1 Angebotssumme -->
+    <div class="field">
+      <label class="field-lbl" for="f-summe"><span class="step-num">1</span>Angebotssumme (förderfähige Kosten)</label>
+      <div class="inp-eur">
+        <input class="inp" id="f-summe" type="number" inputmode="numeric" min="0" step="1" placeholder="z. B. 32.000">
+      </div>
+      <div class="field-hint">Ganze Euro. Fossile Anteile von Hybridanlagen sind nie förderfähig und gehören nicht in diese Summe.</div>
+    </div>
+
+    <!-- 2 Wohneinheiten -->
+    <div class="field">
+      <label class="field-lbl"><span class="step-num">2</span>Anzahl Wohneinheiten</label>
+      <div class="stepper">
+        <button type="button" id="we-minus" aria-label="weniger">−</button>
+        <div class="stepper-val"><span id="we-val">1</span><small>Wohneinheit(en)</small></div>
+        <button type="button" id="we-plus" aria-label="mehr">+</button>
+      </div>
+    </div>
+
+    <!-- 3 Selbstnutzung -->
+    <div class="field">
+      <label class="field-lbl"><span class="step-num">3</span>Selbstnutzung einer Wohneinheit?</label>
+      <div class="seg" id="f-selbst">
+        <button type="button" data-v="1" class="on">Ja</button>
+        <button type="button" data-v="0">Nein</button>
+      </div>
+    </div>
+
+    <!-- 4 Bestandsheizung (Gate + KGB) – IMMER sichtbar, auch bei Vermieter -->
+    <div class="field">
+      <label class="field-lbl"><span class="step-num">4</span>Bestandsheizung (wird ersetzt)</label>
+      <div class="choices c3" id="f-heizung">
+        <button type="button" class="choice" data-v="oel">Öl, Kohle, Nachtspeicher oder Gasetagenheizung<small>Anlage muss funktionstüchtig sein.</small></button>
+        <button type="button" class="choice" data-v="gaszentral">Gaszentralheizung</button>
+        <button type="button" class="choice" data-v="keine">Keine fossile Heizung<small>Austausch von Wärmepumpe, Biomasse oder Fernwärmeanschluss wird nach der Reform voraussichtlich nicht mehr gefördert.</small></button>
+      </div>
+      <!-- 4a nur bei Gaszentralheizung -->
+      <label class="check" id="min20-row" style="display:none;margin-top:.6rem">
+        <input type="checkbox" id="f-min20">
+        <span>Mind. 20 Jahre in Betrieb</span>
+      </label>
+    </div>
+
+    <!-- Bonus-Block (5-6), maskiert bei Selbstnutzung=nein -->
+    <div id="bonus-wrap">
+      <div class="mask-note">Boni nur bei Selbstnutzung. Reine Vermieterfälle erhalten (bei Ersatz einer fossilen Heizung) die Grundförderung von 30 %.</div>
+
+      <!-- 5 Einkommen -->
+      <div class="field" data-bonus>
+        <label class="field-lbl"><span class="step-num">5</span>Zu versteuerndes Haushaltseinkommen</label>
+        <div class="choices c4" id="f-einkommen">
+          <button type="button" class="choice" data-v="30">bis 30.000 €</button>
+          <button type="button" class="choice" data-v="40">bis 40.000 €</button>
+          <button type="button" class="choice" data-v="50">bis 50.000 €</button>
+          <button type="button" class="choice" data-v="99">über 50.000 €</button>
+        </div>
+        <div class="field-hint">Durchschnitt des zu versteuernden Einkommens aus dem 2. und 3. Jahr vor Antragstellung, Nachweis per Einkommensteuerbescheid.</div>
+      </div>
+
+      <!-- 6 Kind -->
+      <div class="field" data-bonus>
+        <label class="check">
+          <input type="checkbox" id="f-kind">
+          <span>Mind. 1 minderjähriges Kind im Haushalt</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 7 Antragsdatum -->
+    <div class="field">
+      <label class="field-lbl" for="f-datum"><span class="step-num">7</span>Geplantes Antragsdatum</label>
+      <input class="inp" id="f-datum" type="date" min="2026-07-21">
+      <div class="field-hint">Bestimmt Förderhöchstbetrag und Klimageschwindigkeitsbonus (Degression ab 2027).</div>
+    </div>
+
+  </section>
+
+  <!-- ── ERGEBNIS ── -->
+  <section class="result" id="result">
+    <div class="result-placeholder">
+      <span class="rp-ico">🧮</span>
+      Bitte Pflichtfelder ausfüllen – das Ergebnis erscheint automatisch.
+    </div>
+  </section>
+
+  <p class="static-hint">Fossile Anteile von Hybridanlagen sind nie förderfähig. Die technische Förderfähigkeit der Anlage (JAZ, Kältemittel etc.) wird hier nicht geprüft – es wird angenommen, dass eine förderfähige Anlage angeboten wird.</p>
+
+  <footer class="app-footer">
+    <strong>Unverbindliche Grobauskunft. Keine Förderzusage.</strong> Maßgeblich sind BzA und KfW-Zusage. Voraussetzungen (technische Förderfähigkeit, Einkommensnachweise, Selbstnutzung) werden hier nicht geprüft.<br><br>
+    Gilt für Gebäude mit zentraler Heizungsanlage. WEG und Etagenheizungen: Sonderfall, bitte Projektierung fragen.
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Förderrechner KfW 458 – Rechenkern
+   Rechtsstand BEG-Reform ab 21.07.2026. Alle Beträge in Euro.
+   Prozentsätze als ganze Zahlen. Rundung erst am Ende.
+   ============================================================ */
+
+// ── 3.5 Degression: Antragsdatum → { fhbWE1, kgb } ──────────
+// Halbjahres-Schritte an den Stichtagen 01.02. und 01.08.
+// Basisperiode ab 21.07.2026: FHB_WE1 28.000, KGB 16.
+// Je Schritt: FHB_WE1 −750, KGB −4 (KGB nicht unter 0).
+// Formel statt harter Tabelle, damit sie nicht bei 08/2028 endet.
+function degression(dateStr){
+  var d = new Date(dateStr + "T00:00:00");
+  var step = 0;
+  for (var y = 2027; y <= d.getFullYear() + 1; y++){
+    if (d >= new Date(y + "-02-01T00:00:00")) step++;
+    if (d >= new Date(y + "-08-01T00:00:00")) step++;
+  }
+  return {
+    step: step,
+    fhbWE1: Math.max(0, 28000 - 750 * step),
+    kgb:    Math.max(0, 16 - 4 * step)
+  };
+}
+
+// ── Hauptberechnung ─────────────────────────────────────────
+// in: { summe, n, selbst(bool),
+//       heizung('oel'|'gaszentral'|'keine'|null), min20(bool),
+//       einkommen(30|40|50|99|null), kind(bool), datum('YYYY-MM-DD') }
+function berechne(x){
+  // GATE: Förderung setzt nach der Reform den Ersatz einer fossilen Heizung voraus.
+  // "keine fossile Heizung" => keine Förderung, auch keine Grundförderung.
+  // TODO gegen finales Merkblatt 458 verifizieren.
+  if (x.heizung === "keine") return { gate: true };
+
+  var deg = degression(x.datum);
+
+  // 3.1 Förderhöchstbetrag nach WE-Staffel
+  var fhb = deg.fhbWE1
+          + Math.min(x.n - 1, 5) * 15000   // WE 2 bis 6
+          + Math.max(x.n - 6, 0) * 8000;    // ab WE 7
+
+  // 3.2 Anrechenbare Kosten
+  var fk = Math.min(x.summe, fhb);
+
+  // 3.3 Fördersätze
+  var GRUND = 30;
+
+  // Klimageschwindigkeitsbonus: nur bei Selbstnutzung und wenn die Bestandsheizung
+  //   - Öl/Kohle/Nachtspeicher/Gasetage (funktionstüchtig, ohne Altersgrenze) ODER
+  //   - Gaszentralheizung mit mind. 20 Jahren Betrieb ist.
+  // TODO: 20-Jahre-Grenze für Gaszentralheizung gegen finales Merkblatt 458 prüfen.
+  var kgbActive = x.selbst && (
+        x.heizung === "oel" ||
+        (x.heizung === "gaszentral" && x.min20)
+      );
+  var KGB = kgbActive ? deg.kgb : 0;
+
+  // Relevantes zvE als Stufenindex: 0=≤30k, 1=≤40k, 2=≤50k, 3=über 50k.
+  // Familienzuschlag (Kind): senkt relevantes zvE um 10.000 => eine Stufe runter.
+  var stufeIdx = { "30":0, "40":1, "50":2, "99":3 }[String(x.einkommen)];
+  var relIdx = stufeIdx;
+  if (x.selbst && x.kind && relIdx != null) relIdx = Math.max(0, relIdx - 1);
+
+  // Einkommensbonus – nur bei Selbstnutzung
+  var EB = 0;
+  if (x.selbst && relIdx != null){
+    EB = [40, 30, 10, 0][relIdx];
+  }
+
+  // Deckel – abhängig vom relevanten zvE
+  // TODO: gegen finales Merkblatt 458 verifizieren (Beleg: KfW-Beispiel 08.07.2026).
+  var DECKEL = (x.selbst && relIdx === 0) ? 80 : 70;
+
+  // TODO Wertschöpfungsbonus Q1/2027 (EU-Fertigung +15 %, Nicht-EU Grundförderung 15 %)
+
+  // 3.4 Zuschuss
+  var summeSaetze = GRUND + KGB + EB;
+  var gedeckelt = summeSaetze;                       // rein rechnerisch
+  var zusatzsatz = Math.max(0, Math.min(summeSaetze, DECKEL) - GRUND);
+  var deckelGegriffen = x.selbst && (summeSaetze > DECKEL);
+
+  var grundBetrag = GRUND / 100 * fk;
+  var boniBetrag  = zusatzsatz / 100 * (fk / x.n);
+  var zuschuss    = grundBetrag + boniBetrag;
+
+  // Abgeleitete Größen
+  var effektiverSatz = fk > 0 ? (zuschuss / fk * 100) : 0;
+  var eigenanteil    = x.summe - zuschuss;
+  var satzSelbstWE   = GRUND + zusatzsatz;            // effektiver Satz der selbstgenutzten WE
+  var kappung        = Math.max(0, x.summe - fhb);    // förderfreier Anteil
+
+  return {
+    deg: deg, fhb: fhb, fk: fk,
+    GRUND: GRUND, KGB: KGB, EB: EB, DECKEL: DECKEL,
+    kgbActive: kgbActive, summeSaetze: summeSaetze, gedeckelt: gedeckelt,
+    zusatzsatz: zusatzsatz, deckelGegriffen: deckelGegriffen,
+    grundBetrag: grundBetrag, boniBetrag: boniBetrag,
+    zuschuss: zuschuss, effektiverSatz: effektiverSatz, eigenanteil: eigenanteil,
+    satzSelbstWE: satzSelbstWE, kappung: kappung
+  };
+}
+
+/* ============================================================
+   Formatierung (deutsch)
+   ============================================================ */
+var fmtEUR = new Intl.NumberFormat("de-DE", {maximumFractionDigits:0});
+function euro(v){ return fmtEUR.format(Math.round(v)) + " €"; }
+function euroExakt(v){ return fmtEUR.format(Math.round(v)) + " €"; }
+function pct1(v){ return v.toLocaleString("de-DE",{minimumFractionDigits:1,maximumFractionDigits:1}) + " %"; }
+function dateDE(str){
+  var p = str.split("-"); return p[2] + "." + p[1] + "." + p[0];
+}
+
+/* ============================================================
+   State + UI
+   ============================================================ */
+var state = {
+  summe: null, n: 1, selbst: true,
+  heizung: null, min20: false, einkommen: null, kind: false,
+  datum: null
+};
+
+var $ = function(id){ return document.getElementById(id); };
+
+// Antragsdatum-Default: heute, aber min. 21.07.2026
+(function initDatum(){
+  var min = "2026-07-21";
+  var today = new Date();
+  var iso = today.getFullYear() + "-" +
+            String(today.getMonth()+1).padStart(2,"0") + "-" +
+            String(today.getDate()).padStart(2,"0");
+  var def = (iso < min) ? min : iso;
+  $("f-datum").value = def;
+  state.datum = def;
+})();
+
+// 1 Angebotssumme
+$("f-summe").addEventListener("input", function(){
+  var v = parseInt(this.value, 10);
+  state.summe = (isFinite(v) && v > 0) ? v : null;
+  render();
+});
+
+// 2 Wohneinheiten-Stepper
+function setWE(n){
+  state.n = Math.max(1, Math.min(99, n));
+  $("we-val").textContent = state.n;
+  $("we-minus").disabled = state.n <= 1;
+  $("we-plus").disabled  = state.n >= 99;
+  render();
+}
+$("we-minus").addEventListener("click", function(){ setWE(state.n - 1); });
+$("we-plus").addEventListener("click",  function(){ setWE(state.n + 1); });
+
+// 3 Selbstnutzung
+$("f-selbst").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  state.selbst = b.dataset.v === "1";
+  Array.prototype.forEach.call(this.children, function(c){ c.classList.remove("on"); });
+  b.classList.add("on");
+  document.getElementById("bonus-wrap").classList.toggle("masked", !state.selbst);
+  render();
+});
+
+// 4 Bestandsheizung
+$("f-heizung").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  state.heizung = b.dataset.v;
+  Array.prototype.forEach.call(this.children, function(c){ c.classList.remove("on"); });
+  b.classList.add("on");
+  // 4a nur bei Gaszentralheizung; sonst zurücksetzen
+  var gas = state.heizung === "gaszentral";
+  $("min20-row").style.display = gas ? "" : "none";
+  if (!gas){ state.min20 = false; $("f-min20").checked = false; }
+  render();
+});
+
+// 4a Mind. 20 Jahre in Betrieb (nur Gaszentralheizung)
+$("f-min20").addEventListener("change", function(){
+  state.min20 = this.checked;
+  render();
+});
+
+// 5 Einkommen
+$("f-einkommen").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  state.einkommen = b.dataset.v;
+  Array.prototype.forEach.call(this.children, function(c){ c.classList.remove("on"); });
+  b.classList.add("on");
+  render();
+});
+
+// 6 Kind
+$("f-kind").addEventListener("change", function(){
+  state.kind = this.checked;
+  render();
+});
+
+// 7 Antragsdatum
+$("f-datum").addEventListener("change", function(){
+  if (this.value && this.value >= "2026-07-21"){
+    state.datum = this.value;
+  } else if (this.value) {
+    this.value = "2026-07-21"; state.datum = "2026-07-21";
+  }
+  render();
+});
+
+// Pflichtfelder erfüllt?
+function eingabenVollstaendig(){
+  if (!state.summe || !state.datum) return false;
+  if (!state.heizung) return false;                 // Bestandsheizung immer Pflicht (Gate)
+  if (state.selbst && !state.einkommen) return false;
+  return true;
+}
+
+/* ============================================================
+   Render
+   ============================================================ */
+function render(){
+  var box = $("result");
+  if (!eingabenVollstaendig()){
+    box.innerHTML =
+      '<div class="result-placeholder">' +
+        '<span class="rp-ico">🧮</span>' +
+        'Bitte Pflichtfelder ausfüllen – das Ergebnis erscheint automatisch.' +
+      '</div>';
+    return;
+  }
+
+  var r = berechne(state);
+
+  // GATE: keine fossile Heizung => voraussichtlich keine Förderung
+  if (r.gate){
+    box.innerHTML =
+      '<div class="res-gate">' +
+        '<div class="rg-head">⚠️ Voraussichtlich keine Förderung</div>' +
+        '<div class="rg-body">Nach der BEG-Reform wird nur noch der Wechsel von fossil zu ' +
+        'erneuerbar gefördert. Sonderfälle bitte mit der Projektierung klären.</div>' +
+      '</div>';
+    return;
+  }
+
+  var mehrWE = state.n > 1;
+
+  var html = "";
+
+  // Hauptergebnis
+  html +=
+    '<div class="res-main">' +
+      '<div class="res-lbl">Voraussichtlicher Zuschuss</div>' +
+      '<div class="res-val">' + euro(r.zuschuss) + '</div>' +
+      '<div class="res-sub">' +
+        '<div class="rs-item"><div class="rs-k">Fördersatz</div><div class="rs-v">' + pct1(r.effektiverSatz) + '</div></div>' +
+        '<div class="rs-item"><div class="rs-k">Eigenanteil</div><div class="rs-v">' + euro(r.eigenanteil) + '</div></div>' +
+      '</div>' +
+    '</div>';
+
+  // Konditionen zum Antragsdatum
+  html +=
+    '<div class="kond">Konditionen zum Antragsdatum ' + dateDE(state.datum) +
+    ': max. Kosten erste WE ' + euro(r.deg.fhbWE1) +
+    ', Klimageschwindigkeitsbonus ' + r.deg.kgb + ' %.</div>';
+
+  // Zerlegung
+  html += '<details class="break" open><summary>Zerlegung <span class="chev">▾</span></summary><div class="break-body">';
+
+  // Förderfähige Kosten
+  var fkSub = mehrWE ? ("Angesetzter Förderhöchstbetrag: " + euro(r.fhb)) : "";
+  html += brow("Förderfähige Kosten angesetzt", euro(r.fk), fkSub);
+
+  // Kappungshinweis
+  if (r.kappung > 0){
+    html += '<div class="note-warn">Angebot übersteigt den Förderhöchstbetrag um ' +
+            euro(r.kappung) + ' – dieser Anteil ist förderfrei.</div>';
+  }
+
+  // Grundförderung
+  html += brow("Grundförderung 30 % auf " + euro(r.fk), euro(r.grundBetrag), "");
+
+  // Boni
+  if (state.selbst){
+    var teile = [];
+    if (r.KGB > 0) teile.push("Klimagesch.-Bonus " + r.KGB + " %");
+    teile.push("Einkommensbonus " + r.EB + " %");
+    var bk = mehrWE
+      ? ("Boni auf Anteil selbstgenutzte WE (" + euro(r.fk) + " ÷ " + state.n + " = " + euro(r.fk/state.n) + ")")
+      : ("Boni auf förderfähige Kosten");
+    html += brow(bk, euro(r.boniBetrag), teile.join(" + "));
+
+    if (r.deckelGegriffen){
+      html += '<div class="note-info">Boni auf Förderdeckel ' + r.DECKEL +
+              ' % gedeckelt (rechnerisch wären es ' + r.summeSaetze + ' % gewesen).</div>';
+    }
+
+    if (mehrWE){
+      html += '<div class="note-info">Selbstgenutzte WE effektiv ' + r.satzSelbstWE +
+              ' %, vermietete WE 30 %.</div>';
+    }
+  }
+
+  // Summe
+  html += brow("Zuschuss gesamt", euro(r.zuschuss), "", true);
+
+  html += '</div></details>';
+
+  box.innerHTML = html;
+}
+
+function brow(k, v, sub, total){
+  return '<div class="brow' + (total ? ' total' : '') + '">' +
+           '<div class="bk">' + k + (sub ? ('<small>' + sub + '</small>') : '') + '</div>' +
+           '<div class="bv">' + v + '</div>' +
+         '</div>';
+}
+
+// Init
+setWE(1);
+render();
+
+/* ============================================================
+   Testfälle (Spec §6) – müssen exakt stimmen.
+   In der Konsole prüfbar: foerderTests()
+   ============================================================ */
+// heizung "oel" = "Öl, Kohle, Nachtspeicher oder Gasetagenheizung" (= "fossil funktionstüchtig" der Spec)
+function foerderTests(){
+  var T = [
+    ["T1", {summe:32000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:40,kind:true, datum:"2026-08-01"}, 22400],
+    ["T2", {summe:28000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:40,kind:false,datum:"2026-08-01"}, 19600],
+    ["T3", {summe:28000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:50,kind:false,datum:"2026-08-01"}, 15680],
+    ["T4", {summe:28000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:99,kind:false,datum:"2026-08-01"}, 12880],
+    ["T5", {summe:43000,n:2,selbst:true,heizung:"oel",min20:false,einkommen:30,kind:false,datum:"2026-08-01"}, 23650],
+    ["T6", {summe:43000,n:2,selbst:false,heizung:"oel",min20:false,einkommen:null,kind:false,datum:"2026-08-01"}, 12900],
+    ["T7", {summe:60000,n:2,selbst:true,heizung:"oel",min20:false,einkommen:30,kind:false,datum:"2026-08-01"}, 23650],
+    ["T8", {summe:103000,n:6,selbst:false,heizung:"oel",min20:false,einkommen:null,kind:false,datum:"2026-08-01"}, 30900],
+    ["T9", {summe:28000,n:1,selbst:true,heizung:"gaszentral",min20:false,einkommen:30,kind:false,datum:"2026-08-01"}, 19600],
+    ["T10",{summe:32000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:40,kind:true, datum:"2027-03-15"}, 21800]
+  ];
+  var ok = true;
+  T.forEach(function(t){
+    var got = Math.round(berechne(t[1]).zuschuss);
+    var pass = got === t[2];
+    if(!pass) ok = false;
+    console.log((pass?"✓":"✗") + " " + t[0] + ": erwartet " + t[2] + ", erhalten " + got);
+  });
+  // T11: "Keine fossile Heizung" => Gate greift, keine Berechnung
+  var t11 = berechne({summe:28000,n:1,selbst:true,heizung:"keine",min20:false,einkommen:30,kind:false,datum:"2026-08-01"});
+  var t11pass = t11.gate === true;
+  if(!t11pass) ok = false;
+  console.log((t11pass?"✓":"✗") + " T11: erwartet Gate (keine Förderung), erhalten " + (t11.gate ? "Gate" : "Berechnung"));
+  console.log(ok ? "ALLE TESTS BESTANDEN" : "TESTS FEHLGESCHLAGEN");
+  return ok;
+}
+window.foerderTests = foerderTests;
+
+/* ── Service Worker ── */
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
