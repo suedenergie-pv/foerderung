@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls -la \"C:/Users/Genrih-PC/Desktop/förderung\" 2>/dev/null; echo \"---GLOBAL CLAUDE---\"; cat \"C:/Users/Genrih-PC/.claude/CLAUDE.md\" 2>/dev/null | head -200)"
-    ]
-  }
-}
