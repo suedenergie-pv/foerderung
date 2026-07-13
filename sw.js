@@ -2,12 +2,12 @@
    Strategie: network-first (online = immer frische Dateien), Cache-Fallback offline.
    Es werden nur die App-Shell-Dateien gecacht – keine Eingaben, keine Kundendaten.
    Bei jedem Deploy mit geänderten Dateien CACHE-Version hochzählen. */
-const CACHE = 'se-foerder-v2';
+const CACHE = 'se-foerder-v3';
 const CORE = [
   './',
   './index.html',
   './manifest.json',
-  './suedenergie-logo.png',
+  './suedenergie-logo-farbe.png',
   './assets/icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',

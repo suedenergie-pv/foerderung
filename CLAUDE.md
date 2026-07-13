@@ -20,4 +20,5 @@ Interner Vertriebs-Grobrechner für die Heizungsförderung nach KfW 458, Rechtss
 
 ## Design & Daten
 - Internes Tooling-CI: Orange `#e8603a` auf hellem `#f4f6f8`, Tokens im `:root` von `index.html`. Mobile-first (Nutzung am Handy beim Kunden).
+- **Logo: nur `suedenergie-logo-farbe.png`** (Farb-Wortmarke, vollständiges „g"). Das alte `suedenergie-logo.png` (mit abgeschnittener g-Unterlänge) ist gelöscht und darf **nie wieder** verwendet werden. Neues Logo ist ein breites Wortmark (~6,8:1) → im Header per `height` klein halten und `max-width` deckeln, sonst sprengt es die Mobile-Zeile.
 - **Keine Speicherung, kein localStorage** — bewusst keine Kundendaten im Gerät. Service Worker cached nur die App-Shell.
