@@ -220,7 +220,15 @@ input[type=date].inp{font-weight:600}
           <button type="button" class="choice" data-v="30">bis 30.000 €</button>
           <button type="button" class="choice" data-v="40">bis 40.000 €</button>
           <button type="button" class="choice" data-v="50">bis 50.000 €</button>
-          <button type="button" class="choice" data-v="99">über 50.000 €</button>
+          <button type="button" class="choice" data-v="ueber">über 50.000 €</button>
+        </div>
+        <!-- Verfeinerung nur bei "über 50.000" – entscheidend für den Familienbonus -->
+        <div id="eink-top-row" style="display:none;margin-top:.5rem">
+          <div class="field-hint" style="margin-top:0;margin-bottom:.4rem">Genauer (wichtig, sobald ein Kind im Haushalt lebt):</div>
+          <div class="choices c4" id="f-einkommen-top">
+            <button type="button" class="choice" data-v="60">50.001 – 60.000 €</button>
+            <button type="button" class="choice" data-v="99">über 60.000 €</button>
+          </div>
         </div>
         <div class="field-hint">Durchschnitt des zu versteuernden Einkommens aus dem 2. und 3. Jahr vor Antragstellung, Nachweis per Einkommensteuerbescheid.</div>
       </div>
@@ -291,7 +299,8 @@ function degression(dateStr){
 // ── Hauptberechnung ─────────────────────────────────────────
 // in: { summe, n, selbst(bool),
 //       heizung('oel'|'gaszentral'|'keine'|null), min20(bool),
-//       einkommen(30|40|50|99|null), kind(bool), datum('YYYY-MM-DD') }
+//       einkommen(30|40|50|60|99|null), kind(bool), datum('YYYY-MM-DD') }
+//       einkommen 60 = 50.001–60.000 €, 99 = über 60.000 €
 function berechne(x){
   // GATE: Förderung setzt nach der Reform den Ersatz einer fossilen Heizung voraus.
   // "keine fossile Heizung" => keine Förderung, auch keine Grundförderung.
@@ -321,16 +330,19 @@ function berechne(x){
       );
   var KGB = kgbActive ? deg.kgb : 0;
 
-  // Relevantes zvE als Stufenindex: 0=≤30k, 1=≤40k, 2=≤50k, 3=über 50k.
+  // Relevantes zvE als Stufenindex: 0=≤30k, 1=≤40k, 2=≤50k, 3=≤60k, 4=über 60k.
   // Familienzuschlag (Kind): senkt relevantes zvE um 10.000 => eine Stufe runter.
-  var stufeIdx = { "30":0, "40":1, "50":2, "99":3 }[String(x.einkommen)];
+  // Die "−1 Stufe"-Mechanik ist exakt, weil jede Stufe genau 10.000 breit ist;
+  // deshalb ist die offene Top-Stufe in "≤60k" und "über 60k" aufgeteilt, sonst
+  // würde ein Kind fälschlich auch bei z. B. 80k einen Bonus auslösen.
+  var stufeIdx = { "30":0, "40":1, "50":2, "60":3, "99":4 }[String(x.einkommen)];
   var relIdx = stufeIdx;
   if (x.selbst && x.kind && relIdx != null) relIdx = Math.max(0, relIdx - 1);
 
-  // Einkommensbonus – nur bei Selbstnutzung
+  // Einkommensbonus – nur bei Selbstnutzung (>50k => 0, egal ob 55k oder 80k)
   var EB = 0;
   if (x.selbst && relIdx != null){
-    EB = [40, 30, 10, 0][relIdx];
+    EB = [40, 30, 10, 0, 0][relIdx];
   }
 
   // Deckel – abhängig vom relevanten zvE
@@ -447,12 +459,31 @@ $("f-min20").addEventListener("change", function(){
   render();
 });
 
-// 5 Einkommen
+// 5 Einkommen – Hauptstufen
 $("f-einkommen").addEventListener("click", function(e){
   var b = e.target.closest("button"); if(!b) return;
-  state.einkommen = b.dataset.v;
   Array.prototype.forEach.call(this.children, function(c){ c.classList.remove("on"); });
   b.classList.add("on");
+  var v = b.dataset.v;
+  var top = $("eink-top-row");
+  if (v === "ueber"){
+    // "über 50.000" öffnet die Verfeinerung; erst nach deren Wahl vollständig
+    top.style.display = "";
+    state.einkommen = null;
+  } else {
+    top.style.display = "none";
+    Array.prototype.forEach.call($("f-einkommen-top").children, function(c){ c.classList.remove("on"); });
+    state.einkommen = v;
+  }
+  render();
+});
+
+// 5b Verfeinerung über 50.000 (50.001–60.000 vs. über 60.000)
+$("f-einkommen-top").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  Array.prototype.forEach.call(this.children, function(c){ c.classList.remove("on"); });
+  b.classList.add("on");
+  state.einkommen = b.dataset.v;   // "60" oder "99"
   render();
 });
 
@@ -600,7 +631,12 @@ function foerderTests(){
     ["T7", {summe:60000,n:2,selbst:true,heizung:"oel",min20:false,einkommen:30,kind:false,datum:"2026-08-01"}, 23650],
     ["T8", {summe:103000,n:6,selbst:false,heizung:"oel",min20:false,einkommen:null,kind:false,datum:"2026-08-01"}, 30900],
     ["T9", {summe:28000,n:1,selbst:true,heizung:"gaszentral",min20:false,einkommen:30,kind:false,datum:"2026-08-01"}, 19600],
-    ["T10",{summe:32000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:40,kind:true, datum:"2027-03-15"}, 21800]
+    ["T10",{summe:32000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:40,kind:true, datum:"2027-03-15"}, 21800],
+    // Familienbonus-Fix an der offenen Top-Stufe:
+    // T12: 50.001–60.000 € + Kind => Kind drückt unter 50k => EB 10 %
+    ["T12",{summe:28000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:60,kind:true, datum:"2026-08-01"}, 15680],
+    // T13: über 60.000 € + Kind => bleibt über 50k => KEIN Einkommensbonus
+    ["T13",{summe:28000,n:1,selbst:true,heizung:"oel",min20:false,einkommen:99,kind:true, datum:"2026-08-01"}, 12880]
   ];
   var ok = true;
   T.forEach(function(t){

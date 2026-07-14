@@ -2,7 +2,7 @@
    Strategie: network-first (online = immer frische Dateien), Cache-Fallback offline.
    Es werden nur die App-Shell-Dateien gecacht – keine Eingaben, keine Kundendaten.
    Bei jedem Deploy mit geänderten Dateien CACHE-Version hochzählen. */
-const CACHE = 'se-foerder-v3';
+const CACHE = 'se-foerder-v4';
 const CORE = [
   './',
   './index.html',

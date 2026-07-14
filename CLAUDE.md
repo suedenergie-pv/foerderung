@@ -8,7 +8,7 @@ Interner Vertriebs-Grobrechner für die Heizungsförderung nach KfW 458, Rechtss
 - **Gate:** Förderung setzt den Ersatz einer **fossilen** Bestandsheizung voraus. Bei „Keine fossile Heizung" gibt es voraussichtlich **gar keine** Förderung (auch keine Grundförderung) → Ergebnisbereich zeigt Hinweis statt Zahl. Feld 4 (Bestandsheizung) ist deshalb **immer** Pflicht, auch für Vermieter.
 - Grundförderung 30 % gilt (wenn Gate passiert) immer, auch für reine Vermieter (dann keine Boni).
 - KGB nur bei Selbstnutzung **und** Bestandsheizung „Öl/Kohle/Nachtspeicher/Gasetage" (funktionstüchtig, keine Altersgrenze) **oder** „Gaszentralheizung" mit Haken „mind. 20 Jahre in Betrieb".
-- Familienzuschlag: 1 minderj. Kind senkt das relevante zvE um 10.000 € → eine Einkommensstufe runter.
+- Familienzuschlag: 1 minderj. Kind senkt das relevante zvE um 10.000 € → eine Einkommensstufe runter. Die „−1 Stufe"-Mechanik ist nur exakt, weil jede Stufe genau 10k breit ist; die offene Top-Stufe ist deshalb in „50.001–60.000" (einkommen `60`) und „über 60.000" (einkommen `99`) gesplittet und wird per Progressive Disclosure erst nach Klick auf „über 50.000" abgefragt. Sonst würde ein Kind fälschlich auch bei z. B. 80k einen Bonus auslösen.
 - DECKEL = 80 % bei relevantem zvE ≤ 30k, sonst 70 %.
 - Degression: FHB_WE1 −750 € und KGB −4 %-Punkte je Halbjahr (Stichtage 01.02./01.08.), per Formel, nicht als hart endende Tabelle.
 - **TODO vor Go-live:** Deckel-Regel, Familienzuschlag-Mechanik, Gate-Regel und die 20-Jahre-Grenze für Gaszentralheizungen gegen finales Merkblatt kfw.de/458 gegenprüfen (im Code als `// TODO` markiert). Wertschöpfungsbonus Q1/2027 ist nur Platzhalter.
